@@ -2,6 +2,7 @@ import urllib.request
 import os.path
 from bs4 import BeautifulSoup
 
+
 BASE_URL = 'http://www.lyrics.com/'
 
 

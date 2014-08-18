@@ -3,17 +3,21 @@
 TODO:
 -Getting and saving list of songs of the user and downloading those ones that are not listed
 -Adding lyrics to songs that do not have one
+-use sqlite db to store information
 """
 
 # coding: utf8
 
 import vk_api
 import os
-import urllib
+#import getpass
+import sqlite3
+#import urllib
 
 
 def main():
-    login, password = 'hydrargyrum1911@gmail.com', input("Enter your password: ")
+    password = getpass.getpass("Enter your password: ")
+    login = 'hydrargyrum1911@gmail.com'
     try:
         global vk
         vk = vk_api.VkApi(login, password)
@@ -21,8 +25,11 @@ def main():
         print("Authorsation fails!")
         print(error_msg)
         return
-    audio_urls = get_audio_info()
-    #save_urls_in_file(audio_urls)
+    audio_info = get_audio_info()
+    get_difference(audio_info)
+    #print("saving urls")
+    #save_urls_in_file(audio_info)
+    #print("saved")
     #upload_photo_on_wall()
     return
 
@@ -51,15 +58,31 @@ def save_urls_in_file(song_info):
     #urls = "\n".join(song_info)
     with open("songs.txt", "w") as f:
         for song_detail in song_info:
-            f.write(str(song_detail))
+            f.writelines(str(song_detail))
 
 
+def get_difference(new_lyrics, filename='songs.txt'):
+    if not os.path.exists(filename):
+        print("File does not exist, nothing to compare with")
+        return
+    else:
+        with open(filename, "r") as f:
+            saved_audio = f.readlines()
+            print("debugging...")
+            print(saved_audio)
+            print("="*20)
+            for song in new_lyrics:
+                if not str(song) in saved_audio:
+                    print(song)
+
+
+"""
 def upload_photo_on_wall():
     #my_photos = vk_api.openPhotos("test.png")
     #r = vk_photo.photo_wall("test.png")
     pass
     return
-
+"""
 
 def get_new_urls():
     pass
