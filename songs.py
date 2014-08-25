@@ -3,16 +3,26 @@
 TODO:
 -Getting and saving list of songs of the user and downloading those ones that are not listed
 -Adding lyrics to songs that do not have one
--use sqlite db to store information
 """
 
 # coding: utf8
 
 import vk_api
 import os
-#import getpass
+import getpass
 import sqlite3
 #import urllib
+
+
+def print_menu():
+    print("What do you want to do:\n")
+    print("1. Get list of my songs.\n")
+    print("2. Save list of songs in file.\n")
+    print("3. Download all songs.\n")
+    print("4. Get and download new songs.\n")
+    print("5. Clear db.\n")
+
+
 
 
 def main():
@@ -22,16 +32,44 @@ def main():
         global vk
         vk = vk_api.VkApi(login, password)
     except vk_api.AuthorizationError as error_msg:
-        print("Authorsation fails!")
+        print("Authorisation failed!")
         print(error_msg)
         return
-    audio_info = get_audio_info()
-    get_difference(audio_info)
-    #print("saving urls")
-    #save_urls_in_file(audio_info)
-    #print("saved")
-    #upload_photo_on_wall()
+
+
+    db = connect_db()
+    """while True:
+        print_menu()
+        choice = input("\nYour choice => ")
+        {
+        "1": print(get_audio_info()),
+        "2": print("2"),
+        "3": print("3"),
+        "4": print("4"),
+        "5": remove_table(),
+        }[choice]"""
+    info = get_audio_info()
+    #save_urls_in_db(info, db)
+    get_difference(info, db)
+    close_db(db)
+
     return
+
+
+def connect_db(name='songs.db'):
+    if os.path.exists(name):
+        conn = sqlite3.connect(name)
+        return conn
+    else:
+        conn = sqlite3.connect(name)
+        c = conn.cursor()
+        c.execute('''CREATE TABLE songs
+            (artist text, title text, url text)''')
+    return conn
+
+
+def close_db(db):
+    db.close()
 
 
 def trim_urls(url):
@@ -40,40 +78,46 @@ def trim_urls(url):
         anythind after '.mp3'
         """
         if '.mp3' in url:
-            return url[:url.find(".mp3")+4]
+            return url[:url.find(".mp3")+len(".mp3")]
         else:
             return url
 
 
 def get_audio_info():
+    """
+    returns list of tuples with song artist, title and url
+    """
     response = vk.method('audio.get')
     if response:
         song_urls = [trim_urls(song['url']) for song in response['items']]
-        song_name = [song['artist']+" - "+song['title'] for song in response['items']]
-        song_info = zip(song_name, song_urls)
+        song_authors = [song['artist'] for song in response['items']]
+        song_titles = [song['title'] for song in response['items']]
+        song_info = list(zip(song_authors, song_titles, song_urls))
         return song_info
 
 
-def save_urls_in_file(song_info):
-    #urls = "\n".join(song_info)
-    with open("songs.txt", "w") as f:
-        for song_detail in song_info:
-            f.writelines(str(song_detail))
+def save_urls_in_db(song_info, db):
+    """
+    saves provided urls in songs table in db
+    """
+    c = db.cursor()
+    if song_info:
+        c.executemany('INSERT INTO songs VALUES (?, ?, ?)', song_info)
+        db.commit()
 
 
-def get_difference(new_lyrics, filename='songs.txt'):
-    if not os.path.exists(filename):
-        print("File does not exist, nothing to compare with")
-        return
-    else:
-        with open(filename, "r") as f:
-            saved_audio = f.readlines()
-            print("debugging...")
-            print(saved_audio)
-            print("="*20)
-            for song in new_lyrics:
-                if not str(song) in saved_audio:
-                    print(song)
+def get_difference(song_info, db):
+    """Transforms list of song_info into set,
+    transforms db songs table into set
+    and returns list of get_difference"""
+    c = db.cursor()
+    diff_info = []
+    db_song_info = [song for song in c.execute('SELECT * FROM songs')]
+    for song in song_info:
+        if song not in db_song_info:
+            print(song)
+    #diff_info = [song for song in song_info if song[0] in db_song_info and song[1] in db_song_info]
+    #print(diff_info)
 
 
 """
@@ -84,14 +128,14 @@ def upload_photo_on_wall():
     return
 """
 
-def get_new_urls():
-    pass
 
 
 def download_new_audios():
     if not os.path.exists("Music"):
         os.mkdir("Music")
 
+def remove_table():
+    print("removing table")
 
 if __name__ == '__main__':
     main()

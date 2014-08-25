@@ -2,6 +2,10 @@
 bitreight_values = (32, 64, 96, 128, 160, 192, 256, 320)
 
 
+def get_song_size(url):
+    pass
+
+
 def get_correct_bitrate(bitrate):
     if bitrate > 320:
             proper_bitrate = 320
