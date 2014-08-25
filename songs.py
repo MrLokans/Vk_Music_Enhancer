@@ -27,6 +27,7 @@ def print_menu():
 
 def main():
     password = getpass.getpass("Enter your password: ")
+
     login = 'hydrargyrum1911@gmail.com'
     try:
         global vk
@@ -49,8 +50,8 @@ def main():
         "5": remove_table(),
         }[choice]"""
     info = get_audio_info()
-    #save_urls_in_db(info, db)
-    get_difference(info, db)
+    save_urls_in_db(info, db)
+    #get_difference(info, db)
     close_db(db)
 
     return
@@ -101,7 +102,12 @@ def save_urls_in_db(song_info, db):
     saves provided urls in songs table in db
     """
     c = db.cursor()
-    if song_info:
+    diff = get_difference(song_info, db)
+    if diff:
+        c.executemany('INSERT INTO songs VALUES (?, ?, ?)', diff)
+        db.commit()
+        return
+    else:
         c.executemany('INSERT INTO songs VALUES (?, ?, ?)', song_info)
         db.commit()
 
@@ -112,12 +118,9 @@ def get_difference(song_info, db):
     and returns list of get_difference"""
     c = db.cursor()
     diff_info = []
-    db_song_info = [song for song in c.execute('SELECT * FROM songs')]
-    for song in song_info:
-        if song not in db_song_info:
-            print(song)
-    #diff_info = [song for song in song_info if song[0] in db_song_info and song[1] in db_song_info]
-    #print(diff_info)
+    db_song_info = [song for song in c.execute('SELECT artist, title FROM songs')]
+    diff_info = [song for song in song_info if (song[0],song[1]) not in db_song_info]
+    return diff_info
 
 
 """
