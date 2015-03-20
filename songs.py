@@ -8,10 +8,13 @@ TODO:
 # coding: utf8
 
 import vk_api
+from vk_api.Vk import Vk
 import os
 import getpass
 import sqlite3
 #import urllib
+
+USER_ID = "5"
 
 
 def print_menu():
@@ -23,21 +26,15 @@ def print_menu():
     print("5. Clear db.\n")
 
 
-
-
 def main():
-    password = getpass.getpass("Enter your password: ")
+    # password = getpass.getpass("Enter your password: ")
 
-    login = 'hydrargyrum1911@gmail.com'
-    try:
-        global vk
-        vk = vk_api.VkApi(login, password)
-    except vk_api.AuthorizationError as error_msg:
-        print("Authorisation failed!")
-        print(error_msg)
-        return
-
-
+    # login = 'hydrargyrum1911@gmail.com'
+# try:
+    global vk
+    vk = Vk()
+    if not vk.is_valid_access_token():
+        vk.get_access_token()
     db = connect_db()
     """while True:
         print_menu()
@@ -88,8 +85,9 @@ def get_audio_info():
     """
     returns list of tuples with song artist, title and url
     """
-    response = vk.method('audio.get')
+    response = vk.api_method('audio.get', user_id=USER_ID)
     if response:
+        response = response["response"]
         song_urls = [trim_urls(song['url']) for song in response['items']]
         song_authors = [song['artist'] for song in response['items']]
         song_titles = [song['title'] for song in response['items']]
