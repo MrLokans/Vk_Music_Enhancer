@@ -36,6 +36,7 @@ def main():
     if not vk.is_valid_access_token():
         vk.get_access_token()
     db = connect_db()
+    # TODO: Menu
     """while True:
         print_menu()
         choice = input("\nYour choice => ")
